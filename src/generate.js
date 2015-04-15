@@ -5,42 +5,57 @@ var ejs = require('ejs');
 var wrench = require('wrench');
 
 
-if(process.argv.length < 4) {
-    console.error('missing parameter');
-    process.exit();
+function getCommands(transformations) {
+    var result = [];
+    for(element in transformations) {
+        if(element[0] === ':') {
+            result.push(element.substr(1));
+        }
+    }
+    return result;
 }
 
-var projectName = process.argv[2];
-var destinationDirectory = process.argv[3];
-
+function getFileSystemElements(transformations) {
+    var result = [];
+    for(element in transformations) {
+        if(element[0] !== ':') {
+            result.push(element.substr(1));
+        }
+    }
+    return result;
+}
 
 function transform(
     templateData,
     transformations,
     target
 ) {
-    for(var fileElement in transformations) {
-        if(fileElement[0] === ':') {
-            switch(fileElement.substr(1)) {
-                case 'template':
-                    var outputData = ejs.render(fs.readFileSync(target).toString(), templateData);
-                    fs.writeFileSync(target, outputData);
-                    break;
-                case 'rename':
-                    var replacementString = ejs.render(transformations[fileElement], templateData);
-                    replacementString = path.join(path.dirname(target), replacementString);
-                    fs.renameSync(target, replacementString);
-                    break;
-            }
+    var commands = getCommands(transformations).sort();
+    var fileSystemElements = getFileSystemElements(transformations);
+    
+    commands.forEach(function(command) {
+        switch(command) {
+            case 'template':
+                var outputData = ejs.render(fs.readFileSync(target).toString(), templateData);
+                fs.writeFileSync(target, outputData);
+                break;
+            case 'rename':
+                var replacementString = ejs.render(transformations[fileElement], templateData);
+                replacementString = path.join(path.dirname(target), replacementString);
+                
+                target = replacementString;
+                fs.renameSync(target, replacementString);
+                break;
         }
-        else {
-            transform(
-                templateData,
-                transformations[fileElement],
-                path.join(target, fileElement)
-            );
-        }
-    }
+    });
+
+    fileSystemElements.forEach(function(fileSystemElement) {
+        transform(
+            templateData,
+            transformations[fileSystemElement],
+            path.join(target, fileSystemElement)
+        );
+    })
 }
 
 function generate(
@@ -61,40 +76,6 @@ function generate(
         destination
     );
 }
-
-var templateData = {
-    projectName: projectName,
-    author: 'tsatse'
-};
-
-transformations = {
-    'package.json': {
-        ':template': true
-    },
-    'gruntfile.js': {
-        ':template': true
-    },
-    'src': {
-        'source.js': {
-            ':rename': '<%= projectName %>-ui.js'
-        },
-        'template.html': {
-            ':rename': '<%=  projectName %>-ui-template.js'
-        },
-        'styles': {
-            'style.css': {
-                ':rename': '<%= projectName %>.css'
-            }
-        }
-    }
-}
-
-generate(
-    templateData,
-    transformations,
-    path.join(__dirname, 'template'),
-    destinationDirectory
-);
 
 
 module.exports = generate;
