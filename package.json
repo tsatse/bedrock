@@ -1,7 +1,7 @@
 {
   "name": "scaffolder",
   "version": "0.0.0",
-  "description": "code generator",
+  "description": "generates project files from a template file tree and a description of all the transformations to apply on it",
   "main": "generate.js",
   "scripts": {
     "test": "mocha"
