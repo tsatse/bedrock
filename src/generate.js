@@ -19,7 +19,7 @@ function getFileSystemElements(transformations) {
     var result = [];
     for(element in transformations) {
         if(element[0] !== ':') {
-            result.push(element.substr(1));
+            result.push(element);
         }
     }
     return result;
@@ -40,11 +40,11 @@ function transform(
                 fs.writeFileSync(target, outputData);
                 break;
             case 'rename':
-                var replacementString = ejs.render(transformations[fileElement], templateData);
+                var replacementString = ejs.render(transformations[':' + command], templateData);
                 replacementString = path.join(path.dirname(target), replacementString);
                 
-                target = replacementString;
                 fs.renameSync(target, replacementString);
+                target = replacementString;
                 break;
         }
     });
