@@ -1,0 +1,20 @@
+{
+  "name": "scaffolder",
+  "version": "0.0.0",
+  "description": "code generator",
+  "main": "generate.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+  ],
+  "author": "tsatse",
+  "license": "MIT",
+  "dependencies": {
+    "ejs": "^2.3.1",
+    "wrench": "^1.5.8"
+  },
+  "devDependencies": {
+    "mocha": "^2.2.4"
+  }
+}
