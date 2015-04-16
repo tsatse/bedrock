@@ -1,8 +1,11 @@
 var fs = require('fs');
 var path = require('path');
 
+var Git = require('git-wrapper');
+var git = new Git();
 var ejs = require('ejs');
 var wrench = require('wrench');
+var npm = require('npm');
 
 
 renames = {};
@@ -74,6 +77,20 @@ function executeCommand(command, target, templateData) {
     }
 }
 
+function npmInstall(callback) {
+    npm.load({}, function(error) {
+        if(error) {
+            console.error(error);
+            return;
+        }
+        npm.commands.install([], callback);
+    });
+}
+
+function gitInit(callback) {
+    git.exec('init', [], callback);
+}
+
 function transform(
     templateData,
     transformations,
@@ -95,23 +112,45 @@ function transform(
     })
 }
 
-function generate(
-    templateData,
-    transformations,
-    templateDirectory,
-    destination
-) {
+function generate(options) {
     wrench.copyDirSyncRecursive(
-        templateDirectory,
-        destination, {
+        options.templateDirectory,
+        options.destinationDirectory, {
             forceDelete: true
         }
     );
     transform(
-        templateData,
-        transformations,
-        destination
+        options,
+        options.transformations,
+        options.destinationDirectory
     );
+
+    if(options.gitInit) {
+        process.chdir(options.destinationDirectory);
+        gitInit(function(error) {
+            if(error) {
+                console.log(error);
+                return;
+            }
+            if(options.npmInstall) {
+                npmInstall(function(error) {
+                    if(error) {
+                        console.log(error);
+                        return;
+                    }
+                });
+            }
+        });
+    }
+    else if(options.npmInstall) {
+        npmInstall(function(error) {
+            if(error) {
+                console.log(error);
+                return;
+            }
+        });
+    }
+
 }
 
 

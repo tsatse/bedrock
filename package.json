@@ -1,17 +1,18 @@
 {
   "name": "scaffolder",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "generates project files from a template file tree and a description of all the transformations to apply on it",
   "main": "src/generate.js",
   "scripts": {
     "test": "mocha"
   },
-  "keywords": [
-  ],
+  "keywords": [],
   "author": "tsatse",
   "license": "MIT",
   "dependencies": {
     "ejs": "^2.3.1",
+    "git-wrapper": "^0.1.1",
+    "npm": "^2.7.6",
     "wrench": "^1.5.8"
   },
   "devDependencies": {

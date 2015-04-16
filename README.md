@@ -10,11 +10,13 @@ generates project files from a template file tree and a description of all the t
         templateDirectory,
         destinationDirectory);
 
-**template input data**
+*options* contains the following fields :
+
+**templateInputData** (required)
 
 hash that contains data that should be available when rendering templates
 
-**transformations**
+**transformations** (required)
 
 a description of the transformations to apply to the template tree.
 
@@ -46,13 +48,21 @@ example :
 - *:custom*
     this actions parameter is a function that returns an array of actions to perform
 
-**templateDirectory**
+**templateDirectory** (required)
 
 where sits the template tree
 
-**destinationDirectory**
+**destinationDirectory** (required)
 
 where to generate the files
+
+**gitInit** (optional)
+
+set to true if you want to execute git init after the generation
+
+**npmInstall** (optional)
+
+set to true if you want to execute npm install after the generation
 
 ### licence
 
