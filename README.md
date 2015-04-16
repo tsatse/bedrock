@@ -39,6 +39,10 @@ example :
     - template
         render the current file's content
         uses ejs to render the contents of the file in place using the template input data
+    - delete
+        delete the current file
+    - custom
+        this actions parameter is a function that returns an array of actions to perform
 
 templateDirectory :
 

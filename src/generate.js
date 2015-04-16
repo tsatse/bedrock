@@ -5,11 +5,18 @@ var ejs = require('ejs');
 var wrench = require('wrench');
 
 
+renames = {};
+
 function getCommands(transformations) {
     var result = [];
+    var command;
+
     for(element in transformations) {
         if(element[0] === ':') {
-            result.push(element.substr(1));
+            command = {};
+            command.name = element.substr(1);
+            command.param = transformations[element];
+            result.push(command);
         }
     }
     return result;
@@ -25,28 +32,58 @@ function getFileSystemElements(transformations) {
     return result;
 }
 
+function resolveTarget(target) {
+    return renames[target] || target;
+}
+
+function executeCommand(command, target, templateData) {
+    target = resolveTarget(target);
+    switch(command.name) {
+        case 'template':
+            var outputData = ejs.render(fs.readFileSync(target).toString(), templateData);
+            fs.writeFileSync(target, outputData);
+            break;
+
+        case 'rename':
+            var replacementString = ejs.render(command.param, templateData);
+            replacementString = path.join(path.dirname(target), replacementString);
+            
+            fs.renameSync(target, replacementString);
+            renames[target] = replacementString;
+            break;
+
+        case 'delete':
+            fs.unlinkSync(target);
+            break;
+
+        case 'custom':
+            var toExecute = command.param(templateData);
+            var name;
+            var translatedCommands = [];
+
+            for(name in toExecute) {
+                translatedCommands.push({
+                    name: name.substr(1),
+                    param: toExecute[name]
+                });
+            }
+            translatedCommands.forEach(function(customCommand) {
+                executeCommand(customCommand, target, templateData);
+            });
+            break;
+    }
+}
+
 function transform(
     templateData,
     transformations,
     target
 ) {
-    var commands = getCommands(transformations).sort();
+    var commands = getCommands(transformations).sort(function(a, b) {return a.name.localeCompare(b.name);});
     var fileSystemElements = getFileSystemElements(transformations);
     
     commands.forEach(function(command) {
-        switch(command) {
-            case 'template':
-                var outputData = ejs.render(fs.readFileSync(target).toString(), templateData);
-                fs.writeFileSync(target, outputData);
-                break;
-            case 'rename':
-                var replacementString = ejs.render(transformations[':' + command], templateData);
-                replacementString = path.join(path.dirname(target), replacementString);
-                
-                fs.renameSync(target, replacementString);
-                target = replacementString;
-                break;
-        }
+        executeCommand(command, target, templateData);
     });
 
     fileSystemElements.forEach(function(fileSystemElement) {
