@@ -1,6 +1,6 @@
 generates project files from a template file tree and a description of all the transformations to apply on it
 
-usage :
+### usage :
 
     var scaffolder = require('scaffolder');
 
@@ -53,3 +53,7 @@ where sits the template tree
 **destinationDirectory**
 
 where to generate the files
+
+### licence
+
+MIT
