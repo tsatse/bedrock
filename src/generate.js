@@ -88,7 +88,19 @@ function npmInstall(callback) {
 }
 
 function gitInit(callback) {
-    git.exec('init', [], callback);
+    git.exec('init', [], function(error) {
+        if(error) {
+            console.log(error);
+            return;
+        }
+        git.exec('add', ['.'], function(error) {
+            if(error) {
+                console.log(error);
+                return;
+            }
+            git.exec('commit', ['-m', '"first commit"'], callback);
+        });
+    });
 }
 
 function transform(
