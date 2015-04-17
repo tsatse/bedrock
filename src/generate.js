@@ -6,6 +6,7 @@ var git = new Git();
 var ejs = require('ejs');
 var wrench = require('wrench');
 var npm = require('npm');
+var rimraf = require('rimraf');
 
 
 renames = {};
@@ -56,7 +57,7 @@ function executeCommand(command, target, templateData) {
             break;
 
         case 'delete':
-            fs.unlinkSync(target);
+            rimraf.sync(target);
             break;
 
         case 'custom':
