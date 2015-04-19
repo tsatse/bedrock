@@ -44,7 +44,7 @@ example :
     render the current file's content
     uses ejs to render the contents of the file in place using the template input data
 - *:delete*
-    delete the current file
+    delete the current file (or folder)
 - *:custom*
     this actions parameter is a function that returns an array of actions to perform
 
@@ -58,11 +58,11 @@ where to generate the files
 
 **gitInit** (optional)
 
-set to true if you want to execute git init after the generation
+set to true if you want to execute 'git init', 'git add .' and 'git commit -m "first commit"' after the generation
 
 **npmInstall** (optional)
 
-set to true if you want to execute npm install after the generation
+set to true if you want to execute npm install after the generation (and after git commands)
 
 ### licence
 
