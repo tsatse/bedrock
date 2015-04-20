@@ -1,8 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 
-var Git = require('git-wrapper');
-var git = new Git();
+var git = require('git-promise');
 var ejs = require('ejs');
 var wrench = require('wrench');
 var npm = require('npm');
@@ -78,30 +77,34 @@ function executeCommand(command, target, templateData) {
     }
 }
 
-function npmInstall(callback) {
+function npmInstall(options, callback) {
     npm.load({}, function(error) {
         if(error) {
             console.error(error);
             return;
         }
-        npm.commands.install([], callback);
+        npm.commands.install([], function(error) {
+            if(options.npmLink) {
+                npm.commands.link([], callback);
+            }
+            else {
+                callback(error);
+            }
+        });
     });
 }
 
-function gitInit(callback) {
-    git.exec('init', [], function(error) {
-        if(error) {
+function gitInit() {
+    return git('init')
+        .then(function() {
+            return git('add .');
+        })
+        .then(function() {
+            return git('commit -m "first commit"');
+        })
+        .catch(function(error) {
             console.log(error);
-            return;
-        }
-        git.exec('add', ['.'], function(error) {
-            if(error) {
-                console.log(error);
-                return;
-            }
-            git.exec('commit', ['-m', '"first commit"'], callback);
-        });
-    });
+        })
 }
 
 function transform(
@@ -140,23 +143,21 @@ function generate(options) {
 
     if(options.gitInit) {
         process.chdir(options.destinationDirectory);
-        gitInit(function(error) {
-            if(error) {
-                console.log(error);
-                return;
-            }
-            if(options.npmInstall) {
-                npmInstall(function(error) {
-                    if(error) {
-                        console.log(error);
-                        return;
-                    }
-                });
-            }
+        gitInit(options)
+            .then(function() {
+                if(options.npmInstall) {
+                    npmInstall(options, function(error) {
+                        if(error) {
+                            console.log(error);
+                            return;
+                        }
+                    });
+                }
         });
     }
     else if(options.npmInstall) {
-        npmInstall(function(error) {
+        process.chdir(options.destinationDirectory);
+        npmInstall(options, function(error) {
             if(error) {
                 console.log(error);
                 return;
