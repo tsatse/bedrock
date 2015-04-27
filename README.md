@@ -64,6 +64,26 @@ set to true if you want to execute 'git init', 'git add .' and 'git commit -m "f
 
 set to true if you want to execute npm install after the generation (and after git commands)
 
+**npmLink** (optional)
+
+run npm link after rendering the template
+
+**addRemote** (optional)
+
+an array containing information to add remotes to the git repository (requires the gitInit option to be set).
+
+remote information is as follows :
+
+    {
+        name: 'name-of-the-remote',
+        host: 'remote-host',
+        path: 'path-on-the-remote-host'
+    }
+
+and it will run the following command :
+
+    git remote add name-of-the-remote remote-host/path-on-the-remote-host
+
 ### licence
 
 MIT

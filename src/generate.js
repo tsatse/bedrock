@@ -1,12 +1,17 @@
 var fs = require('fs');
 var path = require('path');
 
+var Q = require('q');
 var git = require('git-promise');
 var ejs = require('ejs');
 var wrench = require('wrench');
 var npm = require('npm');
 var rimraf = require('rimraf');
+var scp = require('scp');
+var bunyan = require('bunyan');
+var log = bunyan.createLogger({name: "scaffolder"});
 
+log.level("debug");
 
 renames = {};
 
@@ -40,6 +45,7 @@ function resolveTarget(target) {
 }
 
 function executeCommand(command, target, templateData) {
+    log.debug('executing command ' + command.name + ' on target ', target);
     target = resolveTarget(target);
     switch(command.name) {
         case 'template':
@@ -69,6 +75,7 @@ function executeCommand(command, target, templateData) {
                     name: name.substr(1),
                     param: toExecute[name]
                 });
+                log.debug('generating a new command ', command.name, ' with param ', toExecute[name]);
             }
             translatedCommands.forEach(function(customCommand) {
                 executeCommand(customCommand, target, templateData);
@@ -77,34 +84,119 @@ function executeCommand(command, target, templateData) {
     }
 }
 
-function npmInstall(options, callback) {
-    npm.load({}, function(error) {
-        if(error) {
-            console.error(error);
-            return;
+
+function npmInstall(options) {
+    process.chdir(options.destinationDirectory);
+    return Q.Promise(function(resolve, reject, notify) {
+        if(options.npmInstall) {
+            npm.load({}, function(error) {
+                if(error) {
+                    console.error(error);
+                    return reject(error);
+                }
+                resolve();
+            });
         }
-        npm.commands.install([], function(error) {
+    })
+        .then(function() {
+            npm.commands.install([], function(error) {
+                if(error) {
+                    console.error(error);
+                    throw error;
+                }
+                return;
+            });
+        })
+        .then(function() {
             if(options.npmLink) {
-                npm.commands.link([], callback);
+                npm.commands.link([], function(error) {
+                    if(error) {
+                        console.error(error);
+                        throw error;
+                    }
+                });
             }
-            else {
-                callback(error);
+        });
+}
+
+function scpPromise(scpParams) {
+    return Q.Promise(function(resolve, reject, notify) {
+        scp.send(scpParams, function(error) {
+            if(error) {
+                return reject(error);
             }
+            resolve();
         });
     });
 }
 
-function gitInit() {
-    return git('init')
+function gitInit(options) {
+    log.debug('gitInit');
+    log.debug('changing directory to ', options.destinationDirectory);
+    process.chdir(options.destinationDirectory);
+    return Q.Promise(function(resolve, reject, notify) {
+        resolve();
+    })
         .then(function() {
-            return git('add .');
+            if(options.gitInit) {
+                log.debug('running git init');
+                return git('init');
+            }
         })
         .then(function() {
-            return git('commit -m "first commit"');
+            if(options.gitInit) {
+                log.debug('running git add .');
+                return git('add .');
+            }
+        })
+        .then(function() {
+            if(options.gitInit) {
+                log.debug('running git commit -m "first commit"');
+                return git('commit -m "first commit"');
+            }
+        })
+        .then(function() {
+            if(options.addRemote) {
+                var projName = path.basename(options.destinationDirectory);
+
+                return Q.all(options.addRemote.map(function(remoteInfo) {
+                    var gitCommand = 'remote add ' + remoteInfo.name + ' ' + remoteInfo.host + ':' + remoteInfo.path + '/' + projName + '.git';
+                    log.debug('running ', gitCommand);
+                    return git(gitCommand);
+                }));
+            }
+        })
+        .then(function() {
+            if(options.addRemote) {
+                var projName = path.basename(options.destinationDirectory);
+
+                log.debug('changing directory to ', path.dirname(options.destinationDirectory));
+                process.chdir(path.dirname(options.destinationDirectory));
+                var gitCommand = 'clone ' + projName + ' --bare';
+                log.debug('running ', gitCommand);
+                return git(gitCommand);
+            }
+        })
+        .then(function() {
+            if(options.addRemote) {
+                return Q.all(
+                    options.addRemote.map(function(remoteInfo) {
+                        var gitRepo = path.basename(options.destinationDirectory) + '.git';
+
+                        log.debug('running scp from ', gitRepo, ' to ', remoteInfo.host + ':' + remoteInfo.path);
+
+                        return scpPromise({
+                            file: gitRepo,
+                            host: remoteInfo.host,
+                            path: remoteInfo.path
+                        });
+                    })
+                );
+            }
         })
         .catch(function(error) {
             console.log(error);
-        })
+        });
 }
 
 function transform(
@@ -119,6 +211,9 @@ function transform(
         executeCommand(command, target, templateData);
     });
 
+    if(renames[target]) {
+        target = renames[target];
+    }
     fileSystemElements.forEach(function(fileSystemElement) {
         transform(
             templateData,
@@ -141,30 +236,15 @@ function generate(options) {
         options.destinationDirectory
     );
 
-    if(options.gitInit) {
-        process.chdir(options.destinationDirectory);
-        gitInit(options)
-            .then(function() {
-                if(options.npmInstall) {
-                    npmInstall(options, function(error) {
-                        if(error) {
-                            console.log(error);
-                            return;
-                        }
-                    });
-                }
-        });
-    }
-    else if(options.npmInstall) {
-        process.chdir(options.destinationDirectory);
-        npmInstall(options, function(error) {
-            if(error) {
-                console.log(error);
-                return;
-            }
-        });
+    if(renames[options.destinationDirectory]) {
+        options.destinationDirectory = renames[options.destinationDirectory];
     }
 
+    options.destinationDirectory = path.resolve(options.destinationDirectory);
+    gitInit(options)
+        .then(function() {
+            return npmInstall(options);
+        });
 }
 
 
