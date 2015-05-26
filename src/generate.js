@@ -19,7 +19,7 @@ function getCommands(transformations) {
     var result = [];
     var command;
 
-    for(element in transformations) {
+    for(var element in transformations) {
         if(element[0] === ':') {
             command = {};
             command.name = element.substr(1);
@@ -32,7 +32,7 @@ function getCommands(transformations) {
 
 function getFileSystemElements(transformations) {
     var result = [];
-    for(element in transformations) {
+    for(var element in transformations) {
         if(element[0] !== ':') {
             result.push(element);
         }
@@ -220,7 +220,7 @@ function transform(
             transformations[fileSystemElement],
             path.join(target, fileSystemElement)
         );
-    })
+    });
 }
 
 function generate(options) {
