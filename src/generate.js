@@ -189,7 +189,10 @@ function gitInit(options) {
                             file: gitRepo,
                             host: remoteInfo.host,
                             path: remoteInfo.path
-                        });
+                        })
+                            .then(function() {
+                                rimraf.sync(gitRepo);
+                            });
                     })
                 );
             }
