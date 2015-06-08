@@ -1,6 +1,6 @@
 {
   "name": "scaffolder",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "generates project files from a template file tree and a description of all the transformations to apply on it",
   "main": "src/generate.js",
   "scripts": {
@@ -17,6 +17,7 @@
     "q": "^1.2.0",
     "rimraf": "^2.3.2",
     "scp": "0.0.3",
+    "cli-prompt": "^0.4.1",
     "wrench": "^1.5.8"
   },
   "devDependencies": {

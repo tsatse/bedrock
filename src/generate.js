@@ -9,9 +9,11 @@ var npm = require('npm');
 var rimraf = require('rimraf');
 var scp = require('scp');
 var bunyan = require('bunyan');
-var log = bunyan.createLogger({name: "scaffolder"});
+var log = bunyan.createLogger({name: 'scaffolder'});
+var prompt = require('cli-prompt');
 
-log.level("debug");
+
+log.level('debug');
 
 renames = {};
 
@@ -226,7 +228,7 @@ function transform(
     });
 }
 
-function generate(options) {
+function generate(options, transformations) {
     wrench.copyDirSyncRecursive(
         options.templateDirectory,
         options.destinationDirectory, {
@@ -235,7 +237,7 @@ function generate(options) {
     );
     transform(
         options,
-        options.transformations,
+        transformations,
         options.destinationDirectory
     );
 
@@ -244,11 +246,93 @@ function generate(options) {
     }
 
     options.destinationDirectory = path.resolve(options.destinationDirectory);
-    gitInit(options)
+    return gitInit(options)
         .then(function() {
             return npmInstall(options);
         });
 }
 
+function getEmptyPromptAction() {
+    return {
+        actionType: 'prompt',
+        sequence: []
+    };
+}
 
-module.exports = generate;
+function parseProgram(program) {
+    var realActions = [];
+    var currentPromptAction = getEmptyPromptAction();
+
+    program.forEach(function(action) {
+        if(action.actionType && action.actionType === 'prompt') {
+            currentPromptAction.sequence.push(action);
+        }
+        else if(action.actionType !== 'prompt') {
+            if(currentPromptAction.sequence.length) {
+                realActions.push(currentPromptAction);
+                currentPromptAction = getEmptyPromptAction();
+            }
+            if(!action.actionType) {
+                action = {
+                    actionType: 'function',
+                    func: action
+                };
+            }
+            realActions.push(action);
+        }
+    });
+    if(currentPromptAction.sequence.length) {
+        realActions.push(currentPromptAction);
+    }
+
+    return realActions;
+}
+
+function updateObject(target, patch) {
+    var result = {};
+    var propertyName;
+
+    for(propertyName in target) {
+        result[propertyName] = target[propertyName];
+    }
+    for(propertyName in patch) {
+        result[propertyName] = patch[propertyName];
+    }
+    return result;
+}
+
+var actionPromises = {
+    'prompt': function(input, action) {
+        return Q.Promise(function(resolve, reject, notify) {
+            prompt.multi(action.sequence, function(enteredData) {
+                var updatedData = updateObject(input, enteredData);
+                resolve(updatedData);
+            });
+        });
+    },
+
+    'function': function(input, action) {
+        return Q(action.func(input));
+    },
+
+    'transform': function(input, action) {
+        return generate(input, action.transformations);
+    }
+};
+
+function executeProgram(program) {
+    return program.reduce(function (previousPromise, currentAction) {
+        return previousPromise.then(function(previousResult) {
+            return actionPromises[currentAction.actionType](previousResult, currentAction)
+        });
+    }, Q({}));
+}
+
+function execute(program) {
+    var parsedProgram = parseProgram(program);
+    console.log(parsedProgram);
+    return executeProgram(parsedProgram);
+}
+
+
+module.exports = execute;
