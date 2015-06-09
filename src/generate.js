@@ -272,7 +272,10 @@ function parseProgram(program) {
                 realActions.push(currentPromptAction);
                 currentPromptAction = getEmptyPromptAction();
             }
-            if(!action.actionType) {
+            if(!action.actionType && typeof(action) === 'object') {
+                action.actionType = 'data';
+            }
+            else if(typeof action === 'function') {
                 action = {
                     actionType: 'function',
                     func: action
@@ -288,15 +291,20 @@ function parseProgram(program) {
     return realActions;
 }
 
-function updateObject(target, patch) {
+function updateObject(target, patch, options) {
     var result = {};
     var propertyName;
+    var omit = options.omit || [];
 
     for(propertyName in target) {
-        result[propertyName] = target[propertyName];
+        if(omit.indexOf(propertyName) === -1) {
+            result[propertyName] = target[propertyName];
+        }
     }
     for(propertyName in patch) {
-        result[propertyName] = patch[propertyName];
+        if(omit.indexOf(propertyName) === -1) {
+            result[propertyName] = patch[propertyName];
+        }
     }
     return result;
 }
@@ -317,13 +325,17 @@ var actionPromises = {
 
     'transform': function(input, action) {
         return generate(input, action.transformations);
+    },
+
+    'data': function(input, action) {
+        return Q.Promise(updateObject(input, action, {omit: 'actionType'}));
     }
 };
 
 function executeProgram(program) {
     return program.reduce(function (previousPromise, currentAction) {
         return previousPromise.then(function(previousResult) {
-            return actionPromises[currentAction.actionType](previousResult, currentAction)
+            return actionPromises[currentAction.actionType](previousResult, currentAction);
         });
     }, Q({}));
 }
