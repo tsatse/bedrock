@@ -294,7 +294,7 @@ function parseProgram(program) {
 function updateObject(target, patch, options) {
     var result = {};
     var propertyName;
-    var omit = options.omit || [];
+    var omit = options && options.omit || [];
 
     for(propertyName in target) {
         if(omit.indexOf(propertyName) === -1) {
@@ -342,7 +342,6 @@ function executeProgram(program) {
 
 function execute(program) {
     var parsedProgram = parseProgram(program);
-    console.log(parsedProgram);
     return executeProgram(parsedProgram);
 }
 
