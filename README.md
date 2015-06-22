@@ -14,7 +14,23 @@ It generates project files from a sequence of actions described in a javascript 
 Each action is an object containing information on what should be done.
 The first action receives an empty parameter object as argument. It can add properties to it and perform tasks. Then it passes that parameter object along to the subsequent action which will be able to use properties and/or add more or modify them and so on. Some properties can be templates that will be rendered with [ejs](https://www.npmjs.com/package/ejs) and using the parameter object itself as a data source, they will bear the "can be templated" comment in the descriptions below.
 
-An action can be one of :
+Every action has a set of parameters, which may be specific to that action or more generic.
+
+for the moment, the only available generic parameter is this :
+
+**executeIf**
+
+    {
+        actionType: <any action>,
+        executeIf: <expression>
+    }
+
+Only performs the action if the result of eval-ing *expression* is true. If you want to use a property from the parameter object in the expression, use the *input* symbol. For instance, if you want an expression that checks if the hasCss property is true from the parameter object, you would use the following expression :
+
+    'input.hasCss'
+
+
+Now here is the list of every possible actions :
 
 **prompt**
 
@@ -79,14 +95,13 @@ It it is not an Array, it's an object that represents the file tree on which we 
 Here is an example for the *transformations* object :
 
     {
-        filename: {
-            ':transformation': <transformation-parameters>,
-            ':transformation': <transformation-parameters>
+        'a-file.ext': {
+            ':rename': "replacement string to apply to a-file.ext",
         },
         foldername: {
-            ':transformation': <transformation-parameters>,
-            child-element: {
-                ':transformation': <transformation-parameters>
+            ':rename': "replacement string to apply to foldername",
+            'another-file.ext': {
+                ':delete': true // will delete the file another-file.ext
             }
         }
     }
@@ -95,10 +110,10 @@ Here is an example for the *transformations* object :
 
 - *:rename*
     rename the file currently processed
-    transformation data is the replacement string. it's a template that will be rendered with the template input data
+    transformation data is the replacement string. it's a template that will be rendered with the parameter object as input data
 - *:template*
     render the current file's content
-    uses ejs to render the contents of the file in place using the template input data
+    uses ejs to render the contents of the file in place using the parameter object as input data
 - *:delete*
     delete the current file (or folder)
 - *:custom*
@@ -120,7 +135,7 @@ It will execute *git init*, *git add .* and *git commit -m "first commit"*.
     {
         actionType: 'addRemote',
         workingDir: <directory of the project>, // required
-        remotes: [ // required
+        remotes: [ // at least one is required
             {
                 name: <name of the remote in the git repository>,
                 host: <remote host>,
