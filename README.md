@@ -48,7 +48,7 @@ Performs the function given under the *func* property with the parameter object.
 
 Updates the parameter object with a list of properties.
 
-** copy **
+**copy**
 
     {
         actionType: 'copy',
@@ -181,4 +181,4 @@ As the name implies, links the npm package locally so that it becomes available 
 
 ### licence
 
-MIT (see (http://opensource.org/licenses/MIT))
+[MIT](http://opensource.org/licenses/MIT)
