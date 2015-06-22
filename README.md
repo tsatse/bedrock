@@ -1,13 +1,18 @@
 Composable project scaffolder.
 It generates project files from a sequence of actions described in a javascript object.
 
+### Installing :
+
+    > npm install @tsatse/scaffolder --save
+
 ### Usage :
 
     var scaffolder = require('scaffolder');
 
     scaffolder(<Array of actions>);
 
-The first action receives an empty parameter object as argument. It can add properties to it and perform tasks. Then it passes that parameter object along to the subsequent action which will be able to use properties and/or add more or modify them and so on. Some properties can be templates that will be rendered with ejs and using the parameter object itself as a data source, they will bear the "can be templated" comment in the descriptions below.
+Each action is an object containing information on what should be done.
+The first action receives an empty parameter object as argument. It can add properties to it and perform tasks. Then it passes that parameter object along to the subsequent action which will be able to use properties and/or add more or modify them and so on. Some properties can be templates that will be rendered with [ejs](https://www.npmjs.com/package/ejs) and using the parameter object itself as a data source, they will bear the "can be templated" comment in the descriptions below.
 
 An action can be one of :
 
@@ -104,17 +109,17 @@ Here is an example for the *transformations* object :
 
     {
         actionType: 'git',
-        destinationDirectory: <directory of the project> // required
+        workingDir: <directory of the project> // required
     }
 
-Initiates a git repository at the location given in *destinationDirectory*
+Initiates a git repository at the location given in *workingDir*
 It will execute *git init*, *git add .* and *git commit -m "first commit"*.
 
 **addRemote**
 
     {
         actionType: 'addRemote',
-        destinationDirectory: <directory of the project>, // required
+        workingDir: <directory of the project>, // required
         remotes: [ // required
             {
                 name: <name of the remote in the git repository>,
@@ -125,10 +130,15 @@ It will execute *git init*, *git add .* and *git commit -m "first commit"*.
         ]
     }
 
+For every remote described in the *remotes* Array, executes the following command :
+
+    > git remote add <name> <host>/<path>
+
 **copyToRemotes**
 
     {
         actionType: 'copyToRemotes',
+        workingDir: <directory of the project>, // required
         remotes: [ // required
             {
                 name: <name of the remote in the git repository>,
@@ -139,9 +149,13 @@ It will execute *git init*, *git add .* and *git commit -m "first commit"*.
         ]
     }
 
-Remotes will be added to the git repository with the following command :
+This will upload the repository located at *workingDir* to every remote described in *remotes*. It will act as if you issued the following commands by hand :
 
-    git remote add <name> <host>/<path>
+    > cd <workingDir>/..
+    > git clone --bare <project name>
+    > scp -r <project name>.git <remote host>/<remote path>
+    > rm -rf <project name>.git
+
 
 **npmInstall**
 
@@ -150,12 +164,20 @@ Remotes will be added to the git repository with the following command :
         destinationDirectory: <directory of the project> // required
     }
 
+As the name implies, installs npm dependencies by issuing the following command in the working directory :
+
+    > npm install
+
 **npmLink**
 
     {
         actionType: 'npmLink',
         destinationDirectory: <directory of the project> // required
     }
+
+As the name implies, links the npm package locally so that it becomes available by other local packages that would link to it. It runs the following command in the working directory :
+
+    > npm link
 
 ### licence
 
