@@ -1,5 +1,5 @@
 {
-  "name": "scaffolder",
+  "name": "@tsatse/scaffolder",
   "version": "1.1.0",
   "description": "generates project files from a template file tree and a description of all the transformations to apply on it",
   "main": "src/generate.js",
