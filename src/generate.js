@@ -366,13 +366,21 @@ var actionPromises = {
 
     'npmLink': function(input) {
         return npmLink(input);
+    },
+
+    'editPackageJson': function(input) {
+        return editPackageJson(input);
     }
 };
 
-function executeProgram(program) {
-    var baseData = {
-        baseDir: process.cwd()
-    };
+function executeProgram(program, inputData) {
+    inputData = inputData || {};
+    var baseData = updateObject(
+        inputData,
+        {
+            baseDir: process.cwd()
+        });
+
     return program.reduce(function (previousPromise, currentAction) {
         return previousPromise.then(function(previousResult) {
             var input = updateObject(previousResult, currentAction, {omit: ['actionType', 'executeIf']});
@@ -393,9 +401,9 @@ function executeProgram(program) {
         });
 }
 
-function execute(program) {
+function execute(program, input) {
     var parsedProgram = parseProgram(program);
-    return executeProgram(parsedProgram);
+    return executeProgram(parsedProgram, input);
 }
 
 
