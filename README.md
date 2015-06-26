@@ -108,15 +108,15 @@ Here is an example for the *transformations* object :
 
 *:transformation* can be one of :
 
-- *:rename*
+- *:rename* :
     rename the file currently processed
     transformation data is the replacement string. it's a template that will be rendered with the parameter object as input data
-- *:template*
+- *:template* :
     render the current file's content
     uses ejs to render the contents of the file in place using the parameter object as input data
-- *:delete*
+- *:delete* :
     delete the current file (or folder)
-- *:custom*
+- *:custom* :
     this actions parameter is a function that returns an array of actions to perform
 
 
