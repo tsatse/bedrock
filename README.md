@@ -128,7 +128,11 @@ Here is an example for the *transformations* object :
     }
 
 Initiates a git repository at the location given in *workingDir*
-It will execute *git init*, *git add .* and *git commit -m "first commit"*.
+It will execute the following commands in sequence :
+    
+    > git init
+    > git add .
+    > git commit -m "first commit"
 
 **addRemote**
 
