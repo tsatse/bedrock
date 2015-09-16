@@ -1,4 +1,4 @@
-var fs = require('fs');
+var fs = require('fs-extra');
 var path = require('path');
 
 var Q = require('q');
@@ -18,6 +18,7 @@ log.level('debug');
 
 function executeCommand(command, templateData) {
     log.debug('executing transformation ' + command.name + ' on target ', command.target);
+    log.debug(command);
     log.debug(templateData);
     var target = ejs.render(command.target, templateData);
     switch(command.name) {
@@ -245,11 +246,9 @@ function transformationsTreeToArray(transformations, target) {
 
 function copy(input) {
     log.debug('copying all files from ' + input.source + ' to ' + input.destination);
-    wrench.copyDirSyncRecursive(
+    fs.copySync(
         ejs.render(input.source, input),
-        ejs.render(input.destination, input), {
-            forceDelete: input.forceDelete
-        }
+        ejs.render(input.destination, input)
     );
     return Q(input);
 }
@@ -259,9 +258,49 @@ function transform(input) {
     if(!(transformations instanceof Array)) {
         transformations = transformationsTreeToArray(transformations, input.target);
     }
+    else {
+        transformations = transformations.map(function(transformation) {
+            var model = getCommands(transformation.transformation)[0];
+            transformation.name = model.name;
+            transformation.param = model.param;
+            delete transformation.transformation;
+            return transformation;
+        });
+    }
     transformations.forEach(function(transformation) {
         executeCommand(transformation, input);
     });
+    return Q(input);
+}
+
+function editPackageJson(input) {
+    var workingDir = getWorkingDir(input);
+    log.debug('changing directory to ', workingDir);
+    process.chdir(workingDir);
+    var target = ejs.render(input.target, input);
+    var packageJson = JSON.parse(fs.readFileSync(target)); // require('./' + target);
+    input.edits.forEach(function(edit) {
+        switch(edit.type) {
+            case 'patch':
+                if(!packageJson[edit.key]) {
+                    packageJson[edit.key] = {};
+                }
+                for(var key in edit.value) {
+                    packageJson[edit.key][key] = edit.value[key];
+                }
+                break;
+            case 'append':
+                if(!packageJson[edit.key]) {
+                    packageJson[edit.key] = [];
+                }
+                if(!(edit.value instanceof Array)) {
+                    edit.value = [edit.value];
+                }
+                packageJson[edit.key] = packageJson[edit.key].concat(edit.value);
+                break;
+        }
+    });
+    fs.writeFileSync(target, JSON.stringify(packageJson, null, 4));
     return Q(input);
 }
 
@@ -277,14 +316,17 @@ function parseProgram(program) {
     var currentPromptAction = getEmptyPromptAction();
 
     program.forEach(function(action) {
-        if(action.actionType && action.actionType === 'prompt') {
+        if(action.actionType === 'prompt') {
             currentPromptAction.sequence.push(action);
         }
-        else if(action.actionType !== 'prompt') {
-            if(currentPromptAction.sequence.length) {
-                realActions.push(currentPromptAction);
-                currentPromptAction = getEmptyPromptAction();
-            }
+    });
+
+    if(currentPromptAction.sequence.length) {
+        realActions.push(currentPromptAction);
+    }
+
+    program.forEach(function(action) {
+        if(action.actionType !== 'prompt') {
             if(!action.actionType && typeof(action) === 'object') {
                 action.actionType = 'data';
             }
@@ -297,9 +339,6 @@ function parseProgram(program) {
             realActions.push(action);
         }
     });
-    if(currentPromptAction.sequence.length) {
-        realActions.push(currentPromptAction);
-    }
 
     return realActions;
 }
@@ -345,7 +384,7 @@ var actionPromises = {
     },
 
     'data': function(input) {
-        return Q.Promise(input);
+        return Q(input);
     },
 
     'git': function(input) {
@@ -384,7 +423,7 @@ function executeProgram(program, inputData) {
     return program.reduce(function (previousPromise, currentAction) {
         return previousPromise.then(function(previousResult) {
             var input = updateObject(previousResult, currentAction, {omit: ['actionType', 'executeIf']});
-            if(!currentAction.executeIf || eval(currentAction.executeIf)) {
+            if(!currentAction.executeIf || eval(ejs.render(currentAction.executeIf, input))) {
                 log.debug('executing command ' + currentAction.actionType);
                 return actionPromises[currentAction.actionType](input);
             }
@@ -403,11 +442,23 @@ function executeProgram(program, inputData) {
 
 function execute(program, input) {
     var parsedProgram = parseProgram(program);
+    log.debug(parsedProgram);
     return executeProgram(parsedProgram, input);
 }
 
+function compose(/* arguments */) {
+    var composition = [];
 
-module.exports = execute;
+    for(var i = 0 ; i < arguments.length ; i++) {
+        composition = composition.concat(arguments[i]);
+    }
+    execute(composition);
+}
+
+
+module.exports = {
+    execute: execute,
+    compose: compose
 // update
-// compose
-// 
+};
+
