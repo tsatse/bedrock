@@ -68,8 +68,8 @@ Updates the parameter object with a list of properties.
 
     {
         actionType: 'copy',
-        source: <source folder>, // can a template
-        destination: <destination folder> // can a template
+        source: <source folder>, // can be a template
+        destination: <destination folder> // can be a template
     }
 
 Copy the contents of *source* to *destination*.
@@ -119,6 +119,33 @@ Here is an example for the *transformations* object :
 - *:custom* :
     this actions parameter is a function that returns an array of actions to perform
 
+**editPackageJson**
+
+Performs a list of edits in the targetted package.json file.
+Here is how to write this action :
+
+    {
+        actionType: 'editPackageJson',
+        target: <path of the package.json file>, // can be a template
+        edits: [
+            {
+                type: <edit action>,
+                key: <key of the targetted property>,
+                value: <parameter value for the edit action>
+            },
+            {
+                type:'append',
+                key: 'keywords',
+                value: 'lili-ui'
+            }
+    }
+
+*edit action* can be one of :
+
+- *patch* :
+    patch the targetted property (or create it if the section doesn't exist) with the fields found in *value* (which must be an object)
+- *append* :
+    push the elements of *value* (which must be an Array) to the targetted property 
 
 **git**
 
