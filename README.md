@@ -133,19 +133,16 @@ Here is how to write this action :
                 key: <key of the targetted property>,
                 value: <parameter value for the edit action>
             },
-            {
-                type:'append',
-                key: 'keywords',
-                value: 'lili-ui'
-            }
+            ...
+        ]
     }
 
 *edit action* can be one of :
 
 - *patch* :
-    patch the targetted property (or create it if the section doesn't exist) with the fields found in *value* (which must be an object)
+    patch the targetted object property (or create it if it doesn't exist) with the fields found in *value* (which must be an object)
 - *append* :
-    push the elements of *value* (which must be an Array) to the targetted property 
+    push the elements from *value* (which must be an Array) to the targetted Array property
 
 **git**
 
