@@ -47,7 +47,7 @@ prompts a question to the user and stores the answer in the parameter object.
 
     {
         actionType: 'function',
-        func: function(parameterObject) {
+        func: function(parameterObject) { // required
             ...
             return parameterObject;
         }
@@ -68,11 +68,20 @@ Updates the parameter object with a list of properties.
 
     {
         actionType: 'copy',
-        source: <source folder>, // can be a template
-        destination: <destination folder> // can be a template
+        source: <source folder>, // required. Can be a template
+        destination: <destination folder> // required. Can be a template
     }
 
 Copy the contents of *source* to *destination*.
+
+**shellCommand**
+
+    {
+        actionType: 'shellCommand',
+        command: <shell command to run> // required.
+    }
+
+Executes the specified command line in shell context.
 
 **transform**
 
@@ -86,7 +95,7 @@ Apply a set of transformations described in the *transformations* object. The *t
 If it is an Array, every element must be of the following form :
     
     {
-        target: <on which file to apply the transformation>, // can be templated
+        target: <on which file to apply the transformation>, // required. can be templated
         transformation: {':<action name>': <action parameters>}
     }
 
@@ -126,7 +135,7 @@ Here is how to write this action :
 
     {
         actionType: 'editPackageJson',
-        target: <path of the package.json file>, // can be a template
+        target: <path of the package.json file>, // required. Can be a template
         edits: [
             {
                 type: <edit action>,
@@ -221,6 +230,15 @@ As the name implies, installs npm dependencies by issuing the following command 
 As the name implies, links the npm package locally so that it becomes available by other local packages that would link to it. It runs the following command in the working directory :
 
     > npm link
+
+**npmLinkLocals**
+
+    {
+        actionType: 'npmLinkLocals'
+    }
+
+Link the npm package with any dependency package that would be linked locally.
+
 
 ### licence
 

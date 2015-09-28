@@ -11,7 +11,7 @@ var scp = require('scp');
 var bunyan = require('bunyan');
 var log = bunyan.createLogger({name: 'scaffolder'});
 var prompt = require('cli-prompt');
-
+var exec = require('child_process').exec
 
 log.level('debug');
 
@@ -104,6 +104,46 @@ function npmLink(input) {
         });
 }
 
+function npmCommand(commandName, params) {
+    return Q.Promise(function(resolve, reject, notify) {
+        npm.commands[commandName](params, function(error) {
+            if(error) {
+                return reject(error);
+            }
+            resolve();
+        });
+    });
+}
+
+function npmLinkLocals(input) {
+    var workingDir = getWorkingDir(input);
+    log.debug('changing directory to ', workingDir);
+    process.chdir(workingDir);
+    return npmLoad()
+        .then(function() {
+            var packageJson = JSON.parse(fs.readFileSync(path.join(workingDir, 'package.json')));
+            var npmPrefix = npm.config.get("prefix");
+            var linkedModulePath = path.join(npmPrefix, 'lib', 'node_modules');
+            var linkedModules = fs.readdirSync(linkedModulePath)
+                .filter(function(packagePath) {
+                    var linkStats = fs.lstatSync(path.join(linkedModulePath, packagePath));
+                    return linkStats.isSymbolicLink();
+                });
+
+            var linkCommands = [];
+            Object.keys(packageJson.dependencies)
+                .forEach(function(packageName) {
+                    if(linkedModules.indexOf(packageName) !== -1) {
+                        linkCommands.push(npmCommand('link', [packageName]));
+                    }
+                });
+            return Q.all(linkCommands);
+        })
+        .then(function() {
+            return Q(input);
+        });
+}
+
 function scpPromise(scpParams) {
     return Q.Promise(function(resolve, reject, notify) {
         scp.send(scpParams, function(error) {
@@ -111,6 +151,21 @@ function scpPromise(scpParams) {
                 return reject(error);
             }
             resolve();
+        });
+    });
+}
+
+function shellCommand(input) {
+    var workingDir = getWorkingDir(input);
+    log.debug('changing directory to ', workingDir);
+    process.chdir(workingDir);
+    return Q.Promise(function(resolve, reject, notify) {
+        exec(input.command, function(error, stdout, stderr) {
+            if(error) {
+                reject(error);
+                return;
+            }
+            resolve(input);
         });
     });
 }
@@ -278,7 +333,7 @@ function editPackageJson(input) {
     log.debug('changing directory to ', workingDir);
     process.chdir(workingDir);
     var target = ejs.render(input.target, input);
-    var packageJson = JSON.parse(fs.readFileSync(target)); // require('./' + target);
+    var packageJson = JSON.parse(fs.readFileSync(target));
     input.edits.forEach(function(edit) {
         switch(edit.type) {
             case 'patch':
@@ -407,8 +462,16 @@ var actionPromises = {
         return npmLink(input);
     },
 
+    'npmLinkLocals': function(input) {
+        return npmLinkLocals(input);
+    },
+
     'editPackageJson': function(input) {
         return editPackageJson(input);
+    },
+
+    'shellCommand': function(input) {
+        return shellCommand(input);
     }
 };
 
