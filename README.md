@@ -9,7 +9,13 @@ It generates project files from a sequence of actions described in a javascript 
 
     var scaffolder = require('scaffolder');
 
-    scaffolder(<Array of actions>);
+    scaffolder.execute(<Array of actions>);
+    // or
+    scaffolder.compose(
+        <Array of actions>,
+        <Array of actions>,
+        <Array of actions>
+        );
 
 Each action is an object containing information on what should be done.
 The first action receives an empty parameter object as argument. It can add properties to it and perform tasks. Then it passes that parameter object along to the subsequent action which will be able to use properties and/or add more or modify them and so on. Some properties can be templates that will be rendered with [ejs](https://www.npmjs.com/package/ejs) and using the parameter object itself as a data source, they will bear the "can be templated" comment in the descriptions below.
