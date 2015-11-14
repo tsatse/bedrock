@@ -26,6 +26,8 @@
         "define",
         "prompt",
         "unescape",
-        "Whammy"
+        "Whammy",
+        "describe",
+        "it"
     ]
 }
