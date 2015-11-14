@@ -1,13 +1,13 @@
 {
-  "name": "@tsatse/scaffolder",
-  "version": "1.4.0",
+  "name": "@tsatse/bedrock",
+  "version": "0.1.0",
   "description": "generates project files from a template file tree and a description of all the transformations to apply on it",
   "main": "src/generate.js",
   "scripts": {
     "test": "mocha"
   },
   "keywords": [],
-  "repository": "https://github.com/tsatse/scaffolder",
+  "repository": "https://github.com/tsatse/bedrock",
   "author": "tsatse",
   "license": "MIT",
   "dependencies": {
@@ -19,7 +19,7 @@
     "npm": "^2.7.6",
     "q": "^1.2.0",
     "rimraf": "^2.3.2",
-    "scp": "0.0.3",
+    "@p": "0.0.3",
     "wrench": "^1.5.8"
   },
   "devDependencies": {

@@ -3,15 +3,15 @@ It generates project files from a sequence of actions described in a javascript 
 
 ### Installing :
 
-    > npm install @tsatse/scaffolder --save
+    > npm install @tsatse/bedrock --save
 
 ### Usage :
 
-    var scaffolder = require('scaffolder');
+    var bedrock = require('@tsatse/bedrock');
 
-    scaffolder.execute(<Array of actions>);
+    bedrock.execute(<Array of actions>);
     // or
-    scaffolder.compose(
+    bedrock.compose(
         <Array of actions>,
         <Array of actions>,
         <Array of actions>
