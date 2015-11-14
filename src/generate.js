@@ -10,8 +10,9 @@ var rimraf = require('rimraf');
 var scp = require('scp');
 var bunyan = require('bunyan');
 var log = bunyan.createLogger({name: 'scaffolder'});
-var prompt = require('cli-prompt');
-var exec = require('child_process').exec
+var cliPrompt = require('cli-prompt');
+var exec = require('child_process').exec;
+
 
 log.level('debug');
 
@@ -57,7 +58,6 @@ function executeCommand(command, templateData) {
             break;
     }
 }
-
 
 function npmLoad() {
     return Q.Promise(function(resolve, reject, notify) {
@@ -419,7 +419,7 @@ function updateObject(target, patch, options) {
 var actionPromises = {
     'prompt': function(input) {
         return Q.Promise(function(resolve, reject, notify) {
-            prompt.multi(input.sequence, function(enteredData) {
+            cliPrompt.multi(input.sequence, function(enteredData) {
                 var updatedData = updateObject(input, enteredData);
                 resolve(updatedData);
             });
