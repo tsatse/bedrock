@@ -17,6 +17,8 @@ registerAction(require('./actions/copy'));
 registerAction(require('./actions/data'));
 registerAction(require('./actions/edit-package-json'));
 registerAction(require('./actions/function'));
+registerAction(require('./actions/gen-init'));
+registerAction(require('./actions/gen-finish'));
 registerAction(require('./actions/git'));
 registerAction(require('./actions/npm-install'));
 registerAction(require('./actions/npm-link-locals'));
@@ -118,7 +120,12 @@ function executeProgram(program, inputData) {
 
     return program.reduce(function (previousPromise, currentAction) {
         return previousPromise.then(function(previousResult) {
-            var input = host.updateObject(previousResult, currentAction, {omit: ['actionType', 'executeIf']});
+            var input = host.updateObject(
+                previousResult,
+                currentAction,
+                {omit: ['actionType', 'executeIf']}
+            );
+
             if(!currentAction.executeIf || eval(ejs.render(currentAction.executeIf, input))) {
                 log.debug('executing command ' + currentAction.actionType);
                 return actionPromises[currentAction.actionType](input, host);
@@ -158,8 +165,6 @@ function registerAction(actionData) {
 
 
 module.exports = {
-    execute: execute,
-    compose: compose,
+    execute: compose,
     registerAction: registerAction
 };
-

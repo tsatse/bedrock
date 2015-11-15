@@ -9,12 +9,11 @@ It generates project files from a sequence of actions described in a javascript 
 
     var bedrock = require('@tsatse/bedrock');
 
-    bedrock.execute(<Array of actions>);
-    // or
-    bedrock.compose(
+    bedrock.execute(
         <Array of actions>,
         <Array of actions>,
-        <Array of actions>
+        <Array of actions>,
+        ...
         );
 
 Each action is an object containing information on what should be done.
