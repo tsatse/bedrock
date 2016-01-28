@@ -1,3 +1,4 @@
+var Q = require('q');
 var fs = require('fs-extra');
 var path = require('path');
 var ejs = require('ejs');
