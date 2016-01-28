@@ -14,7 +14,6 @@
   "author": "tsatse",
   "license": "MIT",
   "dependencies": {
-    "@p": "0.0.3",
     "bunyan": "^1.3.5",
     "cli-prompt": "^0.4.1",
     "ejs": "^2.3.1",
