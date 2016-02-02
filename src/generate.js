@@ -29,7 +29,7 @@ registerActions(require('./actions/shell-command'));
 registerActions(require('./actions/transform'));
 registerActions([{
   name: 'initStep',
-  action: _initStep
+  action: _initStep,
 }]);
 log.level('debug');
 
@@ -143,7 +143,7 @@ function _recordStep(input) {
   );
   return git('add .')
     .then(function() {
-      var comment = '"bedock #1 [' + uncommittedCommands.join(', ') + ']"';
+      var comment = '"bedrock #1 [' + uncommittedCommands.join(', ') + ']"';
       return git('commit -m ' + comment);
     })
     .catch(function() {
