@@ -1,9 +1,9 @@
 #!/usr/local/bin/node
 
-var scaffolder = require('@tsatse/scaffolder');
+var bedrock = require('@tsatse/bedrock');
 var base = require('../src/base');
 
 
-scaffolder.compose(
+bedrock.execute(
     base
 );
